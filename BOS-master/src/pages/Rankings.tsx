@@ -1,0 +1,293 @@
+import React, { useState } from 'react';
+import SchoolRankCard from '../components/rankings/SchoolRankCard';
+import { BarChart3, Filter, TrendingUp } from 'lucide-react';
+
+const Rankings: React.FC = () => {
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState({
+    level: 'all',
+    location: 'all',
+    sortBy: 'rating',
+  });
+
+  // Mock data 
+  const schools = [
+    {
+      id: '3',
+      name: 'SMA Negeri 2 Bandung',
+      level: 'Senior High',
+      location: 'Bandung',
+      rating: 4.8,
+      transparencyScore: 92,
+      fundEfficiency: 88,
+      parentSatisfaction: 91,
+      previousRank: 1,
+      image: 'https://images.pexels.com/photos/256395/pexels-photo-256395.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+    {
+      id: '5',
+      name: 'SMK Negeri 1 Yogyakarta',
+      level: 'Vocational High',
+      location: 'Yogyakarta',
+      rating: 4.7,
+      transparencyScore: 90,
+      fundEfficiency: 87,
+      parentSatisfaction: 89,
+      previousRank: 3,
+      image: 'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+    {
+      id: '2',
+      name: 'SMP Negeri 3 Surabaya',
+      level: 'Junior High',
+      location: 'Surabaya',
+      rating: 4.5,
+      transparencyScore: 87,
+      fundEfficiency: 85,
+      parentSatisfaction: 88,
+      previousRank: 2,
+      image: 'https://images.pexels.com/photos/2982449/pexels-photo-2982449.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+    {
+      id: '7',
+      name: 'SMP Negeri 1 Makassar',
+      level: 'Junior High',
+      location: 'Makassar',
+      rating: 4.3,
+      transparencyScore: 84,
+      fundEfficiency: 82,
+      parentSatisfaction: 86,
+      previousRank: 6,
+      image: 'https://images.pexels.com/photos/159490/yale-university-landscape-universities-schools-159490.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+    {
+      id: '1',
+      name: 'SD Negeri 1 Jakarta',
+      level: 'Elementary',
+      location: 'Jakarta Pusat',
+      rating: 4.2,
+      transparencyScore: 83,
+      fundEfficiency: 79,
+      parentSatisfaction: 85,
+      previousRank: 5,
+      image: 'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+    {
+      id: '6',
+      name: 'SD Negeri 2 Medan',
+      level: 'Elementary',
+      location: 'Medan',
+      rating: 4.0,
+      transparencyScore: 80,
+      fundEfficiency: 76,
+      parentSatisfaction: 82,
+      previousRank: 4,
+      image: 'https://images.pexels.com/photos/159490/yale-university-landscape-universities-schools-159490.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+    {
+      id: '4',
+      name: 'SD Negeri 5 Semarang',
+      level: 'Elementary',
+      location: 'Semarang',
+      rating: 3.9,
+      transparencyScore: 78,
+      fundEfficiency: 74,
+      parentSatisfaction: 80,
+      previousRank: 7,
+      image: 'https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+    {
+      id: '8',
+      name: 'SMA Negeri 1 Denpasar',
+      level: 'Senior High',
+      location: 'Bali',
+      rating: 4.6,
+      transparencyScore: 88,
+      fundEfficiency: 84,
+      parentSatisfaction: 90,
+      previousRank: 9,
+      image: 'https://images.pexels.com/photos/159490/yale-university-landscape-universities-schools-159490.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+    {
+      id: '9',
+      name: 'SMP Negeri 2 Palembang',
+      level: 'Junior High',
+      location: 'Palembang',
+      rating: 4.1,
+      transparencyScore: 81,
+      fundEfficiency: 77,
+      parentSatisfaction: 83,
+      previousRank: 8,
+      image: 'https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    },
+  ];
+
+  // Filter and sort schools based on selected filters
+  const filteredSchools = schools
+    .filter((school) => {
+      if (selectedFilters.level !== 'all' && school.level !== selectedFilters.level) {
+        return false;
+      }
+      if (selectedFilters.location !== 'all' && school.location !== selectedFilters.location) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (selectedFilters.sortBy === 'rating') {
+        return b.rating - a.rating;
+      } else if (selectedFilters.sortBy === 'transparency') {
+        return b.transparencyScore - a.transparencyScore;
+      } else if (selectedFilters.sortBy === 'efficiency') {
+        return b.fundEfficiency - a.fundEfficiency;
+      } else if (selectedFilters.sortBy === 'satisfaction') {
+        return b.parentSatisfaction - a.parentSatisfaction;
+      }
+      return 0;
+    });
+
+  const toggleFilters = () => {
+    setFilterOpen(!filterOpen);
+  };
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setSelectedFilters({
+      ...selectedFilters,
+      [name]: value,
+    });
+  };
+
+  return (
+    <div className="container mx-auto px-4">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">School Rankings</h1>
+        <p className="text-gray-600">
+          Schools ranked by transparency, fund efficiency, and parent satisfaction
+        </p>
+      </div>
+      
+      <div className="flex flex-wrap items-center justify-between mb-6">
+        <div className="flex space-x-2 mb-4 sm:mb-0">
+          <div className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+            <BarChart3 className="w-4 h-4 mr-1" />
+            <span className="text-sm font-medium">2023/2024 Rankings</span>
+          </div>
+          <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full">
+            <TrendingUp className="w-4 h-4 mr-1" />
+            <span className="text-sm font-medium">Updated: May 15, 2025</span>
+          </div>
+        </div>
+        
+        <button
+          onClick={toggleFilters}
+          className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+        >
+          <Filter className="w-4 h-4 mr-1" />
+          {filterOpen ? 'Hide Filters' : 'Show Filters'}
+        </button>
+      </div>
+      
+      {filterOpen && (
+        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-1">
+                School Level
+              </label>
+              <select
+                id="level"
+                name="level"
+                value={selectedFilters.level}
+                onChange={handleFilterChange}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="all">All Levels</option>
+                <option value="Elementary">Elementary</option>
+                <option value="Junior High">Junior High</option>
+                <option value="Senior High">Senior High</option>
+                <option value="Vocational High">Vocational High</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+                Location
+              </label>
+              <select
+                id="location"
+                name="location"
+                value={selectedFilters.location}
+                onChange={handleFilterChange}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="all">All Locations</option>
+                <option value="Jakarta Pusat">Jakarta</option>
+                <option value="Bandung">Bandung</option>
+                <option value="Surabaya">Surabaya</option>
+                <option value="Yogyakarta">Yogyakarta</option>
+                <option value="Semarang">Semarang</option>
+                <option value="Makassar">Makassar</option>
+                <option value="Medan">Medan</option>
+                <option value="Bali">Bali</option>
+                <option value="Palembang">Palembang</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="sortBy" className="block text-sm font-medium text-gray-700 mb-1">
+                Sort By
+              </label>
+              <select
+                id="sortBy"
+                name="sortBy"
+                value={selectedFilters.sortBy}
+                onChange={handleFilterChange}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="rating">Overall Rating</option>
+                <option value="transparency">Transparency Score</option>
+                <option value="efficiency">Fund Efficiency</option>
+                <option value="satisfaction">Parent Satisfaction</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => setSelectedFilters({ level: 'all', location: 'all', sortBy: 'rating' })}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              Reset Filters
+            </button>
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredSchools.map((school, index) => (
+          <SchoolRankCard
+            key={school.id}
+            rank={index + 1}
+            id={school.id}
+            name={school.name}
+            rating={school.rating}
+            transparencyScore={school.transparencyScore}
+            fundEfficiency={school.fundEfficiency}
+            parentSatisfaction={school.parentSatisfaction}
+            previousRank={school.previousRank}
+            image={school.image}
+          />
+        ))}
+      </div>
+      
+      <div className="flex justify-center mt-8">
+        <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+          Load More Schools
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Rankings;
