@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SchoolRankCard from '../components/rankings/SchoolRankCard';
 import { BarChart3, Filter, TrendingUp } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Rankings: React.FC = () => {
   const [filterOpen, setFilterOpen] = useState(false);

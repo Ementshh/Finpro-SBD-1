@@ -5,7 +5,7 @@ import { BarChart3, Filter, Download } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import React, { useState, useEffect } from "react";
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
