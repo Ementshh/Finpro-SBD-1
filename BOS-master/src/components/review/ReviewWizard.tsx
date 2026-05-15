@@ -107,8 +107,32 @@ const ReviewWizard: React.FC<ReviewWizardProps> = ({ schoolId, schoolName, onSub
     }
   };
 
-  const handleSubmit = () => {
-    onSubmit(reviewData);
+  const handleSubmit = async () => {
+    try {
+      const averageScore = Math.round(
+        (reviewData.fundUtilization + reviewData.feeTransparency + reviewData.facilityMaintenance + reviewData.academicResources + reviewData.extracurricularFunding) / 5
+      );
+      
+      const res = await fetch('http://localhost:5000/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          school_id: reviewData.schoolId,
+          user_id: 1, 
+          score: averageScore,
+          comments: reviewData.comments
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to submit review');
+      }
+
+      onSubmit(reviewData);
+    } catch (err) {
+      console.error(err);
+      alert('Error submitting review to backend!');
+    }
   };
 
   const renderStepContent = () => {

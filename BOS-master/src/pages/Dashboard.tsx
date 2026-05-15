@@ -3,7 +3,9 @@ import FundUsageDonut from "../components/dashboard/FundUsageDonut";
 import SchoolsTable from "../components/dashboard/SchoolsTable";
 import { BarChart3, Filter, Download } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+const API_URL = 'http://localhost:5000/api';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -15,112 +17,53 @@ const Dashboard: React.FC = () => {
     usageRange: "all",
   });
 
-  const allocationData = [
-    {
-      name: "SD Negeri 1",
-      allocated: 350000000,
-      used: 280000000,
-      remaining: 70000000,
-    },
-    {
-      name: "SMP Negeri 3",
-      allocated: 420000000,
-      used: 310000000,
-      remaining: 110000000,
-    },
-    {
-      name: "SMA Negeri 2",
-      allocated: 580000000,
-      used: 420000000,
-      remaining: 160000000,
-    },
-    {
-      name: "SD Negeri 5",
-      allocated: 330000000,
-      used: 290000000,
-      remaining: 40000000,
-    },
-    {
-      name: "SMK Negeri 1",
-      allocated: 610000000,
-      used: 520000000,
-      remaining: 90000000,
-    },
-  ];
+  const [schoolsData, setSchoolsData] = useState<any[]>([]);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const usageData = [
-    { name: "Teacher Salaries", value: 420000000, color: "#0052CC" },
-    { name: "Teaching Materials", value: 150000000, color: "#00B8D9" },
-    { name: "Infrastructure", value: 220000000, color: "#36B37E" },
-    { name: "Student Activities", value: 80000000, color: "#FF8B00" },
-    { name: "Administrative", value: 70000000, color: "#6554C0" },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const schoolsRes = await fetch(`${API_URL}/schools`);
+        const schoolsJson = await schoolsRes.json();
+        
+        const mappedSchools = schoolsJson.map((s: any) => ({
+          id: s.id.toString(),
+          name: s.name,
+          level: s.education_level || "Unknown",
+          location: s.region || "Unknown",
+          rating: parseFloat(s.average_rating) || 0,
+          fundAllocation: parseFloat(s.fund_allocation) || 0,
+          fundUsagePercentage: parseFloat(s.fund_usage_percentage) || 0,
+        }));
+        setSchoolsData(mappedSchools);
 
-  const schoolsData = [
-    {
-      id: "1",
-      name: "SD Negeri 1 Jakarta",
-      level: "Elementary",
-      location: "Jakarta Pusat",
-      rating: 4.2,
-      fundAllocation: 350000000,
-      fundUsagePercentage: 80,
-    },
-    {
-      id: "2",
-      name: "SMP Negeri 3 Surabaya",
-      level: "Junior High",
-      location: "Surabaya",
-      rating: 4.5,
-      fundAllocation: 420000000,
-      fundUsagePercentage: 73,
-    },
-    {
-      id: "3",
-      name: "SMA Negeri 2 Bandung",
-      level: "Senior High",
-      location: "Bandung",
-      rating: 4.8,
-      fundAllocation: 580000000,
-      fundUsagePercentage: 72,
-    },
-    {
-      id: "4",
-      name: "SD Negeri 5 Semarang",
-      level: "Elementary",
-      location: "Semarang",
-      rating: 3.9,
-      fundAllocation: 330000000,
-      fundUsagePercentage: 88,
-    },
-    {
-      id: "5",
-      name: "SMK Negeri 1 Yogyakarta",
-      level: "Vocational High",
-      location: "Yogyakarta",
-      rating: 4.7,
-      fundAllocation: 610000000,
-      fundUsagePercentage: 85,
-    },
-    {
-      id: "6",
-      name: "SD Negeri 2 Medan",
-      level: "Elementary",
-      location: "Medan",
-      rating: 4.0,
-      fundAllocation: 340000000,
-      fundUsagePercentage: 91,
-    },
-    {
-      id: "7",
-      name: "SMP Negeri 1 Makassar",
-      level: "Junior High",
-      location: "Makassar",
-      rating: 4.3,
-      fundAllocation: 410000000,
-      fundUsagePercentage: 78,
-    },
-  ];
+        const dashRes = await fetch(`${API_URL}/funds/dashboard`);
+        const dashJson = await dashRes.json();
+        setDashboardData(dashJson);
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const allocationData = schoolsData.map((s: any) => ({
+    name: s.name,
+    allocated: s.fundAllocation,
+    used: s.fundAllocation * (s.fundUsagePercentage / 100),
+    remaining: s.fundAllocation - (s.fundAllocation * (s.fundUsagePercentage / 100))
+  }));
+
+  const usageData = dashboardData?.categories?.length > 0 
+    ? dashboardData.categories.map((c: any, index: number) => ({
+        name: c.category,
+        value: parseFloat(c.amount),
+        color: ['#0052CC', '#00B8D9', '#36B37E', '#FF8B00', '#6554C0'][index % 5]
+      }))
+    : [];
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -154,6 +97,10 @@ const Dashboard: React.FC = () => {
     }
     return true;
   });
+
+  if (isLoading) {
+    return <div className="p-8 text-center bg-white rounded-lg mt-6">Loading dashboard data...</div>;
+  }
 
   return (
     <div className="container mx-auto px-4">
@@ -303,7 +250,16 @@ const Dashboard: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <FundAllocationChart data={allocationData} />
+        <FundAllocationChart 
+          data={dashboardData?.summary ? [
+            { 
+              name: "Overall Allocation", 
+              allocated: parseFloat(dashboardData.summary.total) || 500000000, 
+              used: parseFloat(dashboardData.summary.used) || 400000000, 
+              remaining: (parseFloat(dashboardData.summary.total) - parseFloat(dashboardData.summary.used)) || 100000000 
+            }
+          ] : allocationData} 
+        />
         <FundUsageDonut data={usageData} />
       </div>
 

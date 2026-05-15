@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SchoolRankCard from '../components/rankings/SchoolRankCard';
 import { BarChart3, Filter, TrendingUp } from 'lucide-react';
+
+const API_URL = 'http://localhost:5000/api';
 
 const Rankings: React.FC = () => {
   const [filterOpen, setFilterOpen] = useState(false);
@@ -10,119 +12,41 @@ const Rankings: React.FC = () => {
     sortBy: 'rating',
   });
 
-  // Mock data 
-  const schools = [
-    {
-      id: '3',
-      name: 'SMA Negeri 2 Bandung',
-      level: 'Senior High',
-      location: 'Bandung',
-      rating: 4.8,
-      transparencyScore: 92,
-      fundEfficiency: 88,
-      parentSatisfaction: 91,
-      previousRank: 1,
-      image: 'https://images.pexels.com/photos/256395/pexels-photo-256395.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-    {
-      id: '5',
-      name: 'SMK Negeri 1 Yogyakarta',
-      level: 'Vocational High',
-      location: 'Yogyakarta',
-      rating: 4.7,
-      transparencyScore: 90,
-      fundEfficiency: 87,
-      parentSatisfaction: 89,
-      previousRank: 3,
-      image: 'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-    {
-      id: '2',
-      name: 'SMP Negeri 3 Surabaya',
-      level: 'Junior High',
-      location: 'Surabaya',
-      rating: 4.5,
-      transparencyScore: 87,
-      fundEfficiency: 85,
-      parentSatisfaction: 88,
-      previousRank: 2,
-      image: 'https://images.pexels.com/photos/2982449/pexels-photo-2982449.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-    {
-      id: '7',
-      name: 'SMP Negeri 1 Makassar',
-      level: 'Junior High',
-      location: 'Makassar',
-      rating: 4.3,
-      transparencyScore: 84,
-      fundEfficiency: 82,
-      parentSatisfaction: 86,
-      previousRank: 6,
-      image: 'https://images.pexels.com/photos/159490/yale-university-landscape-universities-schools-159490.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-    {
-      id: '1',
-      name: 'SD Negeri 1 Jakarta',
-      level: 'Elementary',
-      location: 'Jakarta Pusat',
-      rating: 4.2,
-      transparencyScore: 83,
-      fundEfficiency: 79,
-      parentSatisfaction: 85,
-      previousRank: 5,
-      image: 'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-    {
-      id: '6',
-      name: 'SD Negeri 2 Medan',
-      level: 'Elementary',
-      location: 'Medan',
-      rating: 4.0,
-      transparencyScore: 80,
-      fundEfficiency: 76,
-      parentSatisfaction: 82,
-      previousRank: 4,
-      image: 'https://images.pexels.com/photos/159490/yale-university-landscape-universities-schools-159490.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-    {
-      id: '4',
-      name: 'SD Negeri 5 Semarang',
-      level: 'Elementary',
-      location: 'Semarang',
-      rating: 3.9,
-      transparencyScore: 78,
-      fundEfficiency: 74,
-      parentSatisfaction: 80,
-      previousRank: 7,
-      image: 'https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-    {
-      id: '8',
-      name: 'SMA Negeri 1 Denpasar',
-      level: 'Senior High',
-      location: 'Bali',
-      rating: 4.6,
-      transparencyScore: 88,
-      fundEfficiency: 84,
-      parentSatisfaction: 90,
-      previousRank: 9,
-      image: 'https://images.pexels.com/photos/159490/yale-university-landscape-universities-schools-159490.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-    {
-      id: '9',
-      name: 'SMP Negeri 2 Palembang',
-      level: 'Junior High',
-      location: 'Palembang',
-      rating: 4.1,
-      transparencyScore: 81,
-      fundEfficiency: 77,
-      parentSatisfaction: 83,
-      previousRank: 8,
-      image: 'https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    },
-  ];
+  const [schools, setSchools] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Filter and sort schools based on selected filters
+  useEffect(() => {
+    const fetchSchools = async () => {
+      try {
+        const res = await fetch(`${API_URL}/schools`);
+        const data = await res.json();
+        
+        const mappedData = data.map((s: any, index: number) => ({
+          id: s.id.toString(),
+          name: s.name,
+          level: s.education_level || 'Unknown',
+          location: s.region || 'Unknown',
+          rating: parseFloat(s.average_rating) || 0,
+          transparencyScore: 90 - (index * 2),
+          fundEfficiency: parseFloat(s.fund_usage_percentage) || 0, 
+          parentSatisfaction: 88 - (index * 2),
+          previousRank: index + 2,
+          image: [
+            'https://images.pexels.com/photos/256395/pexels-photo-256395.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+            'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+            'https://images.pexels.com/photos/2982449/pexels-photo-2982449.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+          ][index % 3],
+        }));
+        setSchools(mappedData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSchools();
+  }, []);
+
   const filteredSchools = schools
     .filter((school) => {
       if (selectedFilters.level !== 'all' && school.level !== selectedFilters.level) {
@@ -157,6 +81,10 @@ const Rankings: React.FC = () => {
       [name]: value,
     });
   };
+
+  if (isLoading) {
+    return <div className="p-8 text-center bg-white rounded-lg mt-6">Loading rankings data...</div>;
+  }
 
   return (
     <div className="container mx-auto px-4">
