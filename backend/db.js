@@ -2,9 +2,8 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
-  /* Jika menggunakan Vercel Postgres, uncomment baris di bawah ini: */
-  /* ssl: { rejectUnauthorized: false } */
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 pool.connect((err) => {
