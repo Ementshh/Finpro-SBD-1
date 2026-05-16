@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, HelpCircle, Search } from 'lucide-react';
 import { API_URL } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ReviewWizardProps {
   schoolId: string;
@@ -20,6 +21,7 @@ export interface ReviewData {
 }
 
 const ReviewWizard: React.FC<ReviewWizardProps> = ({ schoolId, schoolName, onSubmit }) => {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [schools, setSchools] = useState<{id: string, name: string}[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<{id: string, name: string}[]>([]);
@@ -144,13 +146,18 @@ const ReviewWizard: React.FC<ReviewWizardProps> = ({ schoolId, schoolName, onSub
       const averageScore = Math.round(
         (reviewData.fundUtilization + reviewData.feeTransparency + reviewData.facilityMaintenance + reviewData.academicResources + reviewData.extracurricularFunding) / 5
       );
+
+      const resolvedUserId = reviewData.isAnonymous ? null : user?.id ? Number(user.id) : null;
+      if (!reviewData.isAnonymous && (resolvedUserId === null || Number.isNaN(resolvedUserId))) {
+        throw new Error('You must be logged in to submit a non-anonymous review');
+      }
       
       const res = await fetch(`${API_URL}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           school_id: reviewData.schoolId,
-          user_id: 1, 
+          user_id: resolvedUserId,
           score: averageScore,
           comments: reviewData.comments
         }),

@@ -23,11 +23,15 @@ const ReviewSystem: React.FC = () => {
   
   const handleReviewSubmit = (data: ReviewData) => {
     console.log('Review submitted:', data);
-    // mock submission
     setIsSubmitted(true);
-    
+
+    const targetSchoolId = data.schoolId && data.schoolId !== 'new' ? data.schoolId : id;
     setTimeout(() => {
-      navigate(`/school/${id}`);
+      if (targetSchoolId) {
+        navigate(`/school/${targetSchoolId}`);
+      } else {
+        navigate('/');
+      }
     }, 3000);
   };
 

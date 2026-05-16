@@ -3,6 +3,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { School, Eye, EyeOff } from 'lucide-react';
 
+const formatAuthError = (err: unknown): string => {
+  const message = err instanceof Error ? err.message : 'Invalid email or password';
+
+  // Common Firebase Auth error strings (in case the backend/frontend changes)
+  if (message.includes('auth/email-already-in-use') || message.includes('email-already-in-use')) {
+    return 'Email sudah terdaftar. Silakan login.';
+  }
+  if (
+    message.includes('auth/invalid-credential') ||
+    message.includes('auth/wrong-password') ||
+    message.includes('auth/user-not-found')
+  ) {
+    return 'Email atau password salah.';
+  }
+
+  return message;
+};
+
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +46,7 @@ const Login: React.FC = () => {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError('Invalid email or password');
+      setError(formatAuthError(err));
     } finally {
       setIsLoading(false);
     }

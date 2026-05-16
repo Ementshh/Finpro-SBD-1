@@ -38,21 +38,72 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isUsableJwt = (token: string): boolean => {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+
+    // Validate payload JSON + optional exp
+    try {
+      const payloadBase64Url = parts[1];
+      const payloadBase64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = payloadBase64.padEnd(Math.ceil(payloadBase64.length / 4) * 4, '=');
+      const payload = JSON.parse(atob(padded)) as { exp?: unknown };
+
+      if (typeof payload.exp === 'number') {
+        return payload.exp * 1000 > Date.now();
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const storedToken = localStorage.getItem('token');
+
+    // Only restore a session if we have both user + token.
+    // This prevents old/demo cached users from being treated as authenticated.
+    if (storedUser && storedToken && isUsableJwt(storedToken)) {
+      try {
+        const parsed = JSON.parse(storedUser) as unknown;
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          'id' in parsed &&
+          'name' in parsed &&
+          'email' in parsed &&
+          'role' in parsed
+        ) {
+          setUser(parsed as User);
+        } else {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+        }
+      } catch {
+        // If an old build stored a non-JSON value (e.g. "undefined"), don't crash the app.
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    } else if (storedUser || storedToken) {
+      // Partial/stale auth state
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password?: string) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      if (!password) {
+        throw new Error('Password is required');
+      }
+
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: password || '123456' }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await parseJsonResponse<{ user?: User; token?: string; error?: string }>(response);
@@ -61,11 +112,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(data.error || 'Login failed');
       }
 
+      if (!data.user) {
+        throw new Error('Login failed: missing user payload');
+      }
+
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      } else {
+        localStorage.removeItem('token');
+      }
     } catch (error) {
       console.error('Login error:', error);
+      // Prevent stale sessions (e.g. leftover "demo" user) from masking a failed login.
+      setUser(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
       throw error;
     } finally {
       setIsLoading(false);
@@ -94,17 +157,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(data.error || 'Registration failed');
       }
 
-      const mockLoginResponse = await fetch(`${API_URL}/auth/login`, {
+      const loginResponse = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       
-      const loginData = await parseJsonResponse<{ user?: User; token?: string }>(mockLoginResponse);
-      if(mockLoginResponse.ok) {
-        setUser(loginData.user);
-        localStorage.setItem('user', JSON.stringify(loginData.user));
+      const loginData = await parseJsonResponse<{ user?: User; token?: string; error?: string }>(loginResponse);
+      if (!loginResponse.ok) {
+        throw new Error(loginData.error || 'Auto-login after registration failed');
+      }
+
+      if (!loginData.user) {
+        throw new Error('Auto-login after registration failed: missing user payload');
+      }
+
+      setUser(loginData.user);
+      localStorage.setItem('user', JSON.stringify(loginData.user));
+      if (loginData.token) {
         localStorage.setItem('token', loginData.token);
+      } else {
+        localStorage.removeItem('token');
       }
     } catch (error) {
       console.error('Registration error:', error);

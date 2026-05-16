@@ -3,6 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { School, Eye, EyeOff, CheckCircle, User, Users, GraduationCap } from 'lucide-react';
 
+const formatRegisterError = (err: unknown): string => {
+  const message = err instanceof Error ? err.message : 'Failed to create account';
+
+  // Handle common Firebase Auth error string (in case the auth implementation changes)
+  if (message.includes('auth/email-already-in-use') || message.includes('email-already-in-use')) {
+    return 'Email sudah terdaftar. Silakan login.';
+  }
+
+  return message;
+};
+
 const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -85,7 +96,7 @@ const Register: React.FC = () => {
       navigate('/');
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create account');
+      setError(formatRegisterError(err));
     } finally {
       setIsLoading(false);
     }
