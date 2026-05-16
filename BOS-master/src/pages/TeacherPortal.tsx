@@ -30,6 +30,7 @@ const TeacherPortal: React.FC = () => {
 
   const [schoolForm, setSchoolForm] = useState({
     name: "",
+    npsn: "",
     education_level: "",
     region: "",
     principal: "",
@@ -101,7 +102,10 @@ const TeacherPortal: React.FC = () => {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          ...schoolForm,
+          name: schoolForm.name,
+          npsn: schoolForm.npsn || undefined,
+          region: schoolForm.region,
+          education_level: schoolForm.education_level,
           total_students: schoolForm.total_students
             ? parseInt(schoolForm.total_students)
             : undefined,
@@ -118,6 +122,7 @@ const TeacherPortal: React.FC = () => {
       ]);
       setSchoolForm({
         name: "",
+        npsn: "",
         education_level: "",
         region: "",
         principal: "",
@@ -327,6 +332,20 @@ const TeacherPortal: React.FC = () => {
                 </div>
 
                 <div>
+                  <label className={labelClass}>NPSN</label>
+                  <input
+                    type="text"
+                    maxLength={20}
+                    className={inputClass}
+                    placeholder="e.g. 20100001 (auto-generated if empty)"
+                    value={schoolForm.npsn}
+                    onChange={(e) =>
+                      setSchoolForm({ ...schoolForm, npsn: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
                   <label className={labelClass}>
                     Education Level {requiredMark}
                   </label>
@@ -423,6 +442,7 @@ const TeacherPortal: React.FC = () => {
                   onClick={() =>
                     setSchoolForm({
                       name: "",
+                      npsn: "",
                       education_level: "",
                       region: "",
                       principal: "",

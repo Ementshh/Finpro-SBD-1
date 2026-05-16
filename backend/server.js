@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const db = require('./db');
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const db = require("./db");
 
 const app = express();
 
@@ -9,45 +9,45 @@ app.use(cors());
 app.use(express.json());
 
 // Health/info endpoint so the deployment root doesn't 404 ("Cannot GET /")
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.status(200).json({
-    status: 'ok',
-    service: 'finpro-backend',
-    version: '1.0.1', // BERGUNA UNTUK CEK DEPLOYMENT UPDATE
-    message: 'Backend is running. Use /api/* endpoints.',
+    status: "ok",
+    service: "finpro-backend",
+    version: "1.0.1", // BERGUNA UNTUK CEK DEPLOYMENT UPDATE
+    message: "Backend is running. Use /api/* endpoints.",
   });
 });
 
 // Common typo: users paste/visit a URL with a trailing apostrophe (e.g. /')
 // Some clients will URL-encode it as /%27
 app.get(["/%27", "/'"], (req, res) => {
-  res.redirect(308, '/');
+  res.redirect(308, "/");
 });
 
-app.get('/api', (req, res) => {
+app.get("/api", (req, res) => {
   res.status(200).json({
-    status: 'ok',
-    service: 'finpro-backend',
+    status: "ok",
+    service: "finpro-backend",
     endpoints: {
-      schools: '/api/schools',
-      dashboard: '/api/funds/dashboard',
+      schools: "/api/schools",
+      dashboard: "/api/funds/dashboard",
       reviews: {
-        listBySchool: '/api/reviews/:school_id',
-        create: '/api/reviews',
+        listBySchool: "/api/reviews/:school_id",
+        create: "/api/reviews",
       },
       auth: {
-        register: '/api/auth/register',
-        login: '/api/auth/login',
+        register: "/api/auth/register",
+        login: "/api/auth/login",
       },
     },
   });
 });
 
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 // Endpoint Get Schools
-app.get('/api/schools', async (req, res) => {
+app.get("/api/schools", async (req, res) => {
   try {
     const result = await db.query(`
       SELECT 
@@ -68,14 +68,18 @@ app.get('/api/schools', async (req, res) => {
 });
 
 // Endpoint Dashboard
-app.get('/api/funds/dashboard', async (req, res) => {
+app.get("/api/funds/dashboard", async (req, res) => {
   try {
-    const allocationResult = await db.query('SELECT COALESCE(SUM(total_received), 0) as total, COALESCE(SUM(total_used), 0) as used FROM fund_allocations');
-    const categoryResult = await db.query('SELECT category, COALESCE(SUM(amount), 0) as amount FROM fund_usages GROUP BY category');
-    
+    const allocationResult = await db.query(
+      "SELECT COALESCE(SUM(total_received), 0) as total, COALESCE(SUM(total_used), 0) as used FROM fund_allocations",
+    );
+    const categoryResult = await db.query(
+      "SELECT category, COALESCE(SUM(amount), 0) as amount FROM fund_usages GROUP BY category",
+    );
+
     res.json({
       summary: allocationResult.rows[0],
-      categories: categoryResult.rows
+      categories: categoryResult.rows,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -83,22 +87,25 @@ app.get('/api/funds/dashboard', async (req, res) => {
 });
 
 // Endpoint Reviews
-app.get('/api/reviews/:school_id', async (req, res) => {
+app.get("/api/reviews/:school_id", async (req, res) => {
   const { school_id } = req.params;
   try {
-    const result = await db.query('SELECT * FROM reviews WHERE school_id = $1', [school_id]);
+    const result = await db.query(
+      "SELECT * FROM reviews WHERE school_id = $1",
+      [school_id],
+    );
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/reviews', async (req, res) => {
+app.post("/api/reviews", async (req, res) => {
   const { school_id, user_id, score, comments } = req.body;
   try {
     const result = await db.query(
-      'INSERT INTO reviews (school_id, user_id, score, comments) VALUES ($1, $2, $3, $4) RETURNING *',
-      [school_id, user_id, score, comments]
+      "INSERT INTO reviews (school_id, user_id, score, comments) VALUES ($1, $2, $3, $4) RETURNING *",
+      [school_id, user_id, score, comments],
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -107,18 +114,21 @@ app.post('/api/reviews', async (req, res) => {
 });
 
 // Endpoint Auth
-app.post('/api/auth/register', async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
-    const userExist = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (userExist.rows.length > 0) return res.status(400).json({ error: 'Email sudah terdaftar' });
+    const userExist = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (userExist.rows.length > 0)
+      return res.status(400).json({ error: "Email sudah terdaftar" });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = await db.query(
-      'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role',
-      [name, email, hashedPassword, role || 'user']
+      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role",
+      [name, email, hashedPassword, role || "user"],
     );
 
     res.status(201).json(newUser.rows[0]);
@@ -127,19 +137,23 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (user.rows.length === 0) return res.status(400).json({ error: 'Email tidak ditemukan' });
+    const user = await db.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (user.rows.length === 0)
+      return res.status(400).json({ error: "Email tidak ditemukan" });
 
     const validPassword = await bcrypt.compare(password, user.rows[0].password);
-    if (!validPassword) return res.status(400).json({ error: 'Password salah' });
+    if (!validPassword)
+      return res.status(400).json({ error: "Password salah" });
 
     const token = jwt.sign(
       { id: user.rows[0].id, role: user.rows[0].role },
       process.env.JWT_SECRET,
-      { expiresIn: '1d' }
+      { expiresIn: "1d" },
     );
 
     res.json({
@@ -148,8 +162,121 @@ app.post('/api/auth/login', async (req, res) => {
         id: user.rows[0].id,
         name: user.rows[0].name,
         email: user.rows[0].email,
-        role: user.rows[0].role
-      }
+        role: user.rows[0].role,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/schools", async (req, res) => {
+  const { name, npsn, region, education_level, total_students, accreditation } =
+    req.body;
+  if (!name) return res.status(400).json({ error: "School name is required" });
+
+  const finalNpsn =
+    npsn || `AUTO${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(0, 20);
+
+  try {
+    const result = await db.query(
+      `INSERT INTO schools (name, npsn, region, education_level, total_students, accreditation)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [
+        name,
+        finalNpsn,
+        region || null,
+        education_level || null,
+        total_students || null,
+        accreditation || null,
+      ],
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    if (err.code === "23505") {
+      return res
+        .status(400)
+        .json({ error: "NPSN sudah terdaftar, gunakan NPSN lain" });
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/funds/usage", async (req, res) => {
+  const { school_id, category, amount, description, date } = req.body;
+  if (!school_id || !category || !amount || !date) {
+    return res
+      .status(400)
+      .json({ error: "school_id, category, amount, and date are required" });
+  }
+
+  const year = new Date(date).getFullYear();
+
+  try {
+    let allocationRes = await db.query(
+      "SELECT id FROM fund_allocations WHERE school_id = $1 AND year = $2 LIMIT 1",
+      [school_id, year],
+    );
+
+    let allocationId;
+    if (allocationRes.rows.length === 0) {
+      const newAlloc = await db.query(
+        "INSERT INTO fund_allocations (school_id, year, total_received, total_used) VALUES ($1, $2, 0, 0) RETURNING id",
+        [school_id, year],
+      );
+      allocationId = newAlloc.rows[0].id;
+    } else {
+      allocationId = allocationRes.rows[0].id;
+    }
+
+    const usageResult = await db.query(
+      `INSERT INTO fund_usages (allocation_id, category, amount, description, usage_date)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [allocationId, category, amount, description || null, date],
+    );
+
+    await db.query(
+      "UPDATE fund_allocations SET total_used = total_used + $1 WHERE id = $2",
+      [amount, allocationId],
+    );
+
+    res.status(201).json(usageResult.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/funds/allocation", async (req, res) => {
+  const { school_id, amount, quarter, year, notes } = req.body;
+  if (!school_id || !amount || !year) {
+    return res
+      .status(400)
+      .json({ error: "school_id, amount, and year are required" });
+  }
+
+  try {
+    const existing = await db.query(
+      "SELECT id FROM fund_allocations WHERE school_id = $1 AND year = $2 LIMIT 1",
+      [school_id, year],
+    );
+
+    let result;
+    if (existing.rows.length > 0) {
+      result = await db.query(
+        "UPDATE fund_allocations SET total_received = total_received + $1 WHERE id = $2 RETURNING *",
+        [amount, existing.rows[0].id],
+      );
+    } else {
+      result = await db.query(
+        "INSERT INTO fund_allocations (school_id, year, total_received, total_used) VALUES ($1, $2, $3, 0) RETURNING *",
+        [school_id, year, amount],
+      );
+    }
+
+    res.status(201).json({
+      ...result.rows[0],
+      quarter: quarter || null,
+      notes: notes || null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
