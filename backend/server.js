@@ -51,16 +51,14 @@ app.get('/api/schools', async (req, res) => {
     const result = await db.query(`
       SELECT 
         s.*,
-        COALESCE(AVG(r.score), 0) as average_rating,
-        COALESCE(SUM(fa.total_received), 0) as fund_allocation,
-        CASE 
-          WHEN SUM(fa.total_received) = 0 THEN 0 
-          ELSE (SUM(fa.total_used) / SUM(fa.total_received) * 100) 
-        END as fund_usage_percentage
+        (SELECT COALESCE(AVG(score), 0) FROM reviews WHERE school_id = s.id) as average_rating,
+        (SELECT COALESCE(SUM(total_received), 0) FROM fund_allocations WHERE school_id = s.id) as fund_allocation,
+        (SELECT CASE 
+            WHEN SUM(total_received) IS NULL OR SUM(total_received) = 0 THEN 0 
+            ELSE (SUM(total_used) / SUM(total_received) * 100) 
+          END FROM fund_allocations WHERE school_id = s.id) as fund_usage_percentage
       FROM schools s
-      LEFT JOIN reviews r ON s.id = r.school_id
-      LEFT JOIN fund_allocations fa ON s.id = fa.school_id
-      GROUP BY s.id
+      ORDER BY s.id
     `);
     res.json(result.rows);
   } catch (err) {
@@ -71,8 +69,8 @@ app.get('/api/schools', async (req, res) => {
 // Endpoint Dashboard
 app.get('/api/funds/dashboard', async (req, res) => {
   try {
-    const allocationResult = await db.query('SELECT SUM(total_received) as total, SUM(total_used) as used FROM fund_allocations');
-    const categoryResult = await db.query('SELECT category, SUM(amount) as amount FROM fund_usages GROUP BY category');
+    const allocationResult = await db.query('SELECT COALESCE(SUM(total_received), 0) as total, COALESCE(SUM(total_used), 0) as used FROM fund_allocations');
+    const categoryResult = await db.query('SELECT category, COALESCE(SUM(amount), 0) as amount FROM fund_usages GROUP BY category');
     
     res.json({
       summary: allocationResult.rows[0],
