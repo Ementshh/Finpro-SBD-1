@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CheckCircle, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, HelpCircle, Search } from 'lucide-react';
 import { API_URL } from '../../config/api';
 
 interface ReviewWizardProps {
@@ -21,6 +21,12 @@ export interface ReviewData {
 
 const ReviewWizard: React.FC<ReviewWizardProps> = ({ schoolId, schoolName, onSubmit }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [schools, setSchools] = useState<{id: string, name: string}[]>([]);
+  const [filteredSchools, setFilteredSchools] = useState<{id: string, name: string}[]>([]);
+  const [searchQuery, setSearchQuery] = useState(schoolName === 'Select a School' ? '' : schoolName);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedSchoolName, setSelectedSchoolName] = useState(schoolName);
+
   const [reviewData, setReviewData] = useState<ReviewData>({
     schoolId,
     fundUtilization: 0,
@@ -32,7 +38,32 @@ const ReviewWizard: React.FC<ReviewWizardProps> = ({ schoolId, schoolName, onSub
     isAnonymous: false,
   });
 
+  useEffect(() => {
+    const fetchSchools = async () => {
+      try {
+        const res = await fetch(`${API_URL}/schools`);
+        if (res.ok) {
+          const data = await res.json();
+          const mappedSchools = data.map((s: any) => ({
+            id: s.id.toString(),
+            name: s.name
+          }));
+          setSchools(mappedSchools);
+          setFilteredSchools(mappedSchools);
+        }
+      } catch (err) {
+        console.error('Error fetching schools', err);
+      }
+    };
+    fetchSchools();
+  }, []);
+
   const steps = [
+    {
+      title: 'Select School',
+      description: 'Find and select the school you want to review',
+      isSchoolSelection: true,
+    },
     {
       title: 'Fund Utilization',
       description: 'How well does the school utilize BOS funds?',
@@ -139,6 +170,67 @@ const ReviewWizard: React.FC<ReviewWizardProps> = ({ schoolId, schoolName, onSub
   const renderStepContent = () => {
     const step = steps[currentStep];
     
+    if ('isSchoolSelection' in step && step.isSchoolSelection) {
+      return (
+        <div className="mt-8">
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Search for a School</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                className="w-full pl-10 p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Type school name to search..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsDropdownOpen(true);
+                  if (e.target.value.trim() === '') {
+                    setFilteredSchools(schools);
+                  } else {
+                    setFilteredSchools(
+                      schools.filter((s) => s.name.toLowerCase().includes(e.target.value.toLowerCase()))
+                    );
+                  }
+                }}
+                onFocus={() => setIsDropdownOpen(true)}
+              />
+              {isDropdownOpen && filteredSchools.length > 0 && (
+                <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {filteredSchools.map((s) => (
+                    <li
+                      key={s.id}
+                      className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setReviewData({ ...reviewData, schoolId: s.id });
+                        setSelectedSchoolName(s.name);
+                        setSearchQuery(s.name);
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      {s.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+          {reviewData.schoolId && reviewData.schoolId !== 'new' && (
+            <div className="mt-6 p-4 bg-green-50 text-green-800 rounded-md flex items-center border border-green-200">
+              <CheckCircle className="w-5 h-5 mr-3 text-green-600" />
+              <div>
+                <p className="text-sm text-green-600 font-medium">Selected School</p>
+                <p className="text-lg font-semibold">{selectedSchoolName}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     if (step.isTextArea) {
       return (
         <div className="mt-6">
@@ -211,7 +303,7 @@ const ReviewWizard: React.FC<ReviewWizardProps> = ({ schoolId, schoolName, onSub
   return (
     <div className="bg-white rounded-lg shadow-md p-6 max-w-3xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Review {schoolName}</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Review {selectedSchoolName === 'Select a School' ? 'a School' : selectedSchoolName}</h2>
         <p className="text-gray-600 mt-1">
           Help improve transparency by sharing your experience
         </p>
@@ -284,14 +376,14 @@ const ReviewWizard: React.FC<ReviewWizardProps> = ({ schoolId, schoolName, onSub
         <button
           onClick={nextStep}
           className={`px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 ${
-            (steps[currentStep].field && 
-            reviewData[steps[currentStep].field as keyof ReviewData] === 0) 
+            ((steps[currentStep].field && reviewData[steps[currentStep].field as keyof ReviewData] === 0) ||
+            ('isSchoolSelection' in steps[currentStep] && (!reviewData.schoolId || reviewData.schoolId === 'new')))
               ? 'opacity-50 cursor-not-allowed' 
               : ''
           }`}
           disabled={
-            steps[currentStep].field &&
-            reviewData[steps[currentStep].field as keyof ReviewData] === 0
+            (steps[currentStep].field && reviewData[steps[currentStep].field as keyof ReviewData] === 0) ||
+            ('isSchoolSelection' in steps[currentStep] && (!reviewData.schoolId || reviewData.schoolId === 'new'))
           }
         >
           {currentStep === steps.length - 1 ? 'Submit Review' : 'Next Step'}
