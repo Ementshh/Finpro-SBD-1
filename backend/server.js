@@ -17,6 +17,12 @@ app.get('/', (req, res) => {
   });
 });
 
+// Common typo: users paste/visit a URL with a trailing apostrophe (e.g. /')
+// Some clients will URL-encode it as /%27
+app.get(["/%27", "/'"], (req, res) => {
+  res.redirect(308, '/');
+});
+
 app.get('/api', (req, res) => {
   res.status(200).json({
     status: 'ok',

@@ -1,12 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_URL, parseJsonResponse } from '../config/api';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role:  | 'parent' | 'teacher'  | 'student' | 'user';
+  role: 'parent' | 'teacher' | 'student' | 'user';
 }
 
 interface AuthContextType {
@@ -14,7 +13,14 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role: string) => Promise<void>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    role: string,
+    nisn?: string,
+    teacherInfo?: unknown
+  ) => Promise<void>;
   logout: () => void;
 }
 
@@ -49,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({ email, password: password || '123456' }),
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse<{ user?: User; token?: string; error?: string }>(response);
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
@@ -66,16 +72,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (name: string, email: string, password: string, role: string) => {
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    role: string,
+    nisn?: string,
+    teacherInfo?: unknown
+  ) => {
     setIsLoading(true);
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, nisn, teacherInfo }),
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse<{ error?: string }>(response);
 
       if (!response.ok) {
         throw new Error(data.error || 'Registration failed');
@@ -87,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({ email, password }),
       });
       
-      const loginData = await mockLoginResponse.json();
+      const loginData = await parseJsonResponse<{ user?: User; token?: string }>(mockLoginResponse);
       if(mockLoginResponse.ok) {
         setUser(loginData.user);
         localStorage.setItem('user', JSON.stringify(loginData.user));
