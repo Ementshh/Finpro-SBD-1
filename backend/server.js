@@ -170,6 +170,75 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+app.get("/api/schools/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const schoolRes = await db.query(
+      `
+      SELECT
+        s.*,
+        COALESCE(AVG(r.score), 0) AS average_rating,
+        COALESCE(SUM(fa.total_received), 0) AS fund_allocation,
+        CASE
+          WHEN COALESCE(SUM(fa.total_received), 0) = 0 THEN 0
+          ELSE SUM(fa.total_used) / SUM(fa.total_received) * 100
+        END AS fund_usage_percentage
+      FROM schools s
+      LEFT JOIN reviews r ON r.school_id = s.id
+      LEFT JOIN fund_allocations fa ON fa.school_id = s.id
+      WHERE s.id = $1
+      GROUP BY s.id
+    `,
+      [id],
+    );
+
+    if (schoolRes.rows.length === 0)
+      return res.status(404).json({ error: "School not found" });
+
+    const categoriesRes = await db.query(
+      `
+      SELECT fu.category, COALESCE(SUM(fu.amount), 0) AS amount
+      FROM fund_usages fu
+      JOIN fund_allocations fa ON fu.allocation_id = fa.id
+      WHERE fa.school_id = $1
+      GROUP BY fu.category
+    `,
+      [id],
+    );
+
+    const historyRes = await db.query(
+      `
+      SELECT year, total_received AS allocated, total_used AS used
+      FROM fund_allocations
+      WHERE school_id = $1
+      ORDER BY year ASC
+    `,
+      [id],
+    );
+
+    const reviewsRes = await db.query(
+      `
+      SELECT r.*, u.name AS author_name, u.role AS author_role
+      FROM reviews r
+      LEFT JOIN users u ON r.user_id = u.id
+      WHERE r.school_id = $1
+      ORDER BY r.created_at DESC
+      LIMIT 5
+    `,
+      [id],
+    );
+
+    res.json({
+      ...schoolRes.rows[0],
+      fundCategories: categoriesRes.rows,
+      fundHistory: historyRes.rows,
+      recentReviews: reviewsRes.rows,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post("/api/schools", async (req, res) => {
   const { name, npsn, region, education_level, total_students, accreditation } =
     req.body;
