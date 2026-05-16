@@ -1,7 +1,18 @@
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { School, BarChart3, LineChart, ClipboardCheck, FileText, LogOut, Menu, X, User } from 'lucide-react';
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import {
+  School,
+  BarChart3,
+  LineChart,
+  ClipboardCheck,
+  FileText,
+  LogOut,
+  Menu,
+  X,
+  User,
+  GraduationCap,
+} from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,14 +30,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: BarChart3 },
-    { name: 'School Rankings', href: '/rankings', icon: LineChart },
-    { name: 'Review System', href: user ? '/review/new' : '/login', icon: ClipboardCheck },
-    { name: 'Reports', href: '/reports', icon: FileText },
+    { name: "Dashboard", href: "/", icon: BarChart3 },
+    { name: "School Rankings", href: "/rankings", icon: LineChart },
+    {
+      name: "Review System",
+      href: user ? "/review/new" : "/login",
+      icon: ClipboardCheck,
+    },
+    { name: "Reports", href: "/reports", icon: FileText },
+    ...(user?.role === "teacher"
+      ? [
+          {
+            name: "Teacher Portal",
+            href: "/teacher-portal",
+            icon: GraduationCap,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -36,7 +60,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="h-16 flex items-center px-6 border-b border-gray-200">
           <Link to="/" className="flex items-center space-x-2">
             <School className="h-6 w-6 text-blue-600" />
-            <span className="text-xl font-semibold text-gray-900">BOS Monitor</span>
+            <span className="text-xl font-semibold text-gray-900">
+              BOS Monitor
+            </span>
           </Link>
         </div>
         <nav className="flex-1 py-6 px-4 space-y-1">
@@ -48,8 +74,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 to={item.href}
                 className={`flex items-center px-4 py-2 rounded-md text-sm font-medium ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 <item.icon className="mr-3 h-5 w-5" />
@@ -93,20 +119,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Mobile menu */}
       <div
         className={`lg:hidden fixed inset-0 z-50 bg-gray-900 bg-opacity-50 transition-opacity duration-300 ${
-          mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={toggleMobileMenu}
       />
 
       <div
         className={`lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200">
           <Link to="/" className="flex items-center space-x-2">
             <School className="h-6 w-6 text-blue-600" />
-            <span className="text-xl font-semibold text-gray-900">BOS Monitor</span>
+            <span className="text-xl font-semibold text-gray-900">
+              BOS Monitor
+            </span>
           </Link>
           <button onClick={toggleMobileMenu} className="text-gray-500">
             <X className="h-6 w-6" />
@@ -122,8 +150,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 onClick={toggleMobileMenu}
                 className={`flex items-center px-4 py-2 rounded-md text-sm font-medium ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 <item.icon className="mr-3 h-5 w-5" />
@@ -176,7 +204,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
               <Link to="/" className="flex items-center space-x-2">
                 <School className="h-6 w-6 text-blue-600" />
-                <span className="text-xl font-semibold text-gray-900">BOS Monitor</span>
+                <span className="text-xl font-semibold text-gray-900">
+                  BOS Monitor
+                </span>
               </Link>
             </div>
             {user && (
@@ -191,9 +221,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         {/* Page content */}
         <main className="flex-1 overflow-auto bg-gray-50">
-          <div className="py-6">
-            {children}
-          </div>
+          <div className="py-6">{children}</div>
         </main>
       </div>
     </div>
