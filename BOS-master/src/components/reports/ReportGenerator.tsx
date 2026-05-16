@@ -7,6 +7,7 @@ interface ReportGeneratorProps {
 }
 
 export interface ReportOptions {
+  reportType?: 'bosFund' | 'performance' | 'feedback' | 'custom';
   format: 'pdf' | 'excel' | 'csv';
   timeRange: 'month' | 'quarter' | 'year' | 'custom';
   includeMetrics: string[];
@@ -27,6 +28,7 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({ schools, generateRepo
       start: '',
       end: '',
     },
+    reportType: 'custom',
   });
 
   const [showFilters, setShowFilters] = useState(false);
@@ -71,6 +73,11 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({ schools, generateRepo
     generateReport(options);
   };
 
+  const generateWithOptions = (nextOptions: ReportOptions) => {
+    setOptions(nextOptions);
+    generateReport(nextOptions);
+  };
+
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
@@ -95,12 +102,12 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({ schools, generateRepo
           </p>
           <button 
             onClick={() => {
-              setOptions({
-                ...options, 
+              generateWithOptions({
+                ...options,
+                reportType: 'bosFund',
                 includeMetrics: ['fundAllocation', 'fundUsage', 'fundCategories'],
-                format: 'pdf'
+                format: 'pdf',
               });
-              handleGenerateReport();
             }}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
           >
@@ -119,12 +126,12 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({ schools, generateRepo
           </p>
           <button 
             onClick={() => {
-              setOptions({
-                ...options, 
+              generateWithOptions({
+                ...options,
+                reportType: 'performance',
                 includeMetrics: ['rating', 'transparencyScore', 'compliance'],
-                format: 'excel'
+                format: 'excel',
               });
-              handleGenerateReport();
             }}
             className="w-full px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors flex items-center justify-center"
           >
@@ -143,12 +150,12 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({ schools, generateRepo
           </p>
           <button 
             onClick={() => {
-              setOptions({
-                ...options, 
+              generateWithOptions({
+                ...options,
+                reportType: 'feedback',
                 includeMetrics: ['feedback', 'satisfactionScore', 'suggestions'],
-                format: 'pdf'
+                format: 'pdf',
               });
-              handleGenerateReport();
             }}
             className="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors flex items-center justify-center"
           >
@@ -320,6 +327,7 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({ schools, generateRepo
         <button 
           onClick={() => {
             setOptions({
+              reportType: 'custom',
               format: 'pdf',
               timeRange: 'month',
               includeMetrics: ['fundAllocation', 'fundUsage', 'rating'],
