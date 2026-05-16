@@ -13,6 +13,7 @@ app.get('/', (req, res) => {
   res.status(200).json({
     status: 'ok',
     service: 'finpro-backend',
+    version: '1.0.1', // BERGUNA UNTUK CEK DEPLOYMENT UPDATE
     message: 'Backend is running. Use /api/* endpoints.',
   });
 });
