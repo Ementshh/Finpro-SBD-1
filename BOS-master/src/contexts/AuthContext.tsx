@@ -100,6 +100,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Password is required');
       }
 
+      // Always start from a clean state so a previous cached user (e.g. demo) can't persist.
+      setUser(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,13 +121,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Login failed: missing user payload');
       }
 
+      if (!data.token) {
+        throw new Error('Login failed: missing token');
+      }
+
+      // Safety: if the server returns a different user than requested, reject it.
+      if ((data.user.email || '').toLowerCase() !== email.toLowerCase()) {
+        throw new Error('Login failed: unexpected user returned by server');
+      }
+
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      } else {
-        localStorage.removeItem('token');
-      }
+      localStorage.setItem('token', data.token);
     } catch (error) {
       console.error('Login error:', error);
       // Prevent stale sessions (e.g. leftover "demo" user) from masking a failed login.
@@ -172,13 +182,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Auto-login after registration failed: missing user payload');
       }
 
+      if (!loginData.token) {
+        throw new Error('Auto-login after registration failed: missing token');
+      }
+
+      if ((loginData.user.email || '').toLowerCase() !== email.toLowerCase()) {
+        throw new Error('Auto-login after registration failed: unexpected user returned by server');
+      }
+
       setUser(loginData.user);
       localStorage.setItem('user', JSON.stringify(loginData.user));
-      if (loginData.token) {
-        localStorage.setItem('token', loginData.token);
-      } else {
-        localStorage.removeItem('token');
-      }
+      localStorage.setItem('token', loginData.token);
     } catch (error) {
       console.error('Registration error:', error);
       throw error;

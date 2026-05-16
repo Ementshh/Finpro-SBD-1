@@ -99,6 +99,8 @@ memerlukan rewrite ke `index.html`.
 
 Konfigurasi sudah disiapkan di `BOS-master/vercel.json`.
 
+Jika project di Vercel masih di-deploy dari **root repo** (bukan Root Directory `BOS-master/`), gunakan konfigurasi root: `vercel.json` (di folder paling atas repo ini). Ini akan mencegah 404 ketika refresh route seperti `/review/new`.
+
 ## Deploy ke Vercel (Saran)
 
 ### Backend
