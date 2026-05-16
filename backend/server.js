@@ -8,6 +8,34 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health/info endpoint so the deployment root doesn't 404 ("Cannot GET /")
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'finpro-backend',
+    message: 'Backend is running. Use /api/* endpoints.',
+  });
+});
+
+app.get('/api', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'finpro-backend',
+    endpoints: {
+      schools: '/api/schools',
+      dashboard: '/api/funds/dashboard',
+      reviews: {
+        listBySchool: '/api/reviews/:school_id',
+        create: '/api/reviews',
+      },
+      auth: {
+        register: '/api/auth/register',
+        login: '/api/auth/login',
+      },
+    },
+  });
+});
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
