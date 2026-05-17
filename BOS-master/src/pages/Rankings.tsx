@@ -32,31 +32,22 @@ const Rankings: React.FC = () => {
           
           const calculatedSatisfaction = rating * 20;
 
-          // Kalkulasi Transparency Score yang lebih komprehensif (Sophisticated)
-          // Berdasarkan 3 faktor: Kelengkapan Identitas (30%), Transparansi Finansial (40%), dan Kewajaran Laporan (30%)
           let calculatedTransparency = 0;
           
-          // 1. Kelengkapan Identitas Dasar (Batas Akses Publik) - Max 30 poin
           if (s.npsn) calculatedTransparency += 10;
           if (parseInt(s.total_students) > 0) calculatedTransparency += 10;
           if (s.accreditation && s.accreditation !== 'null') calculatedTransparency += 10;
 
-          // 2. Transparansi Bukti Finansial (Apakah dana dilaporkan?) - Max 40 poin
           if (allocation > 0) calculatedTransparency += 20; 
           if (fundUsage > 0) calculatedTransparency += 20; 
 
-          // 3. Kewajaran & Akurasi (Plausibility) Laporan Keuangan - Max 30 poin
           if (fundUsage > 0 && fundUsage <= 100) {
-            // Laporan logis/sangat baik (menggunakan <= 100% dana yang diberikan)
             calculatedTransparency += 30;
           } else if (fundUsage > 100 && fundUsage <= 150) {
-            // Over-budgeting ringan (masih ditoleransi jika ada subsidi silang/dana lain)
             calculatedTransparency += 15;
           } else if (fundUsage > 150) {
-            // Anomali parah (misal: 666%). Menandakan kesalahan pencatatan/data palsu -> No point
             calculatedTransparency += 0; 
           } else if (allocation > 0 && fundUsage === 0) {
-            // Menerima dana BOS tapi nihil laporan pengeluaran
             calculatedTransparency += 5; 
           }
           
