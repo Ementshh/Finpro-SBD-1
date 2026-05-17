@@ -1,26 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReviewWizard, { ReviewData } from '../components/review/ReviewWizard';
 import { CheckCircle } from 'lucide-react';
+import { API_URL } from '../config/api';
 
 const ReviewSystem: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
-  // Mock data 
-  const schoolData = {
+  const [schoolData, setSchoolData] = useState({
     id: id || 'new',
-    name: id === '1' ? 'SD Negeri 1 Jakarta' :
-          id === '2' ? 'SMP Negeri 3 Surabaya' :
-          id === '3' ? 'SMA Negeri 2 Bandung' :
-          id === '4' ? 'SD Negeri 5 Semarang' :
-          id === '5' ? 'SMK Negeri 1 Yogyakarta' :
-          id === '6' ? 'SD Negeri 2 Medan' :
-          id === '7' ? 'SMP Negeri 1 Makassar' :
-          'Select a School',
-  };
-  
+    name: 'Select a School'
+  });
+
+  useEffect(() => {
+    if (id && id !== 'new') {
+      fetch(`${API_URL}/schools/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.name) {
+            setSchoolData({ id, name: data.name });
+          }
+        })
+        .catch(console.error);
+    }
+  }, [id]);
+
   const handleReviewSubmit = (data: ReviewData) => {
     console.log('Review submitted:', data);
     setIsSubmitted(true);

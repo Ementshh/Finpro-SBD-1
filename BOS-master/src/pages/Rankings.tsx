@@ -20,22 +20,54 @@ const Rankings: React.FC = () => {
         const res = await fetch(`${API_URL}/schools`);
         const data = await res.json();
         
-        const mappedData = data.map((s: any, index: number) => ({
-          id: s.id.toString(),
-          name: s.name,
-          level: s.education_level || 'Unknown',
-          location: s.region || 'Unknown',
-          rating: parseFloat(s.average_rating) || 0,
-          transparencyScore: 90 - (index * 2),
-          fundEfficiency: parseFloat(s.fund_usage_percentage) || 0, 
-          parentSatisfaction: 88 - (index * 2),
-          previousRank: index + 2,
-          image: [
-            'https://images.pexels.com/photos/256395/pexels-photo-256395.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-            'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-            'https://images.pexels.com/photos/2982449/pexels-photo-2982449.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
-          ][index % 3],
-        }));
+        let sortedData = data;
+        sortedData = [...data].sort((a: any, b: any) => {
+          return parseFloat(b.average_rating || 0) - parseFloat(a.average_rating || 0);
+        });
+
+        const mappedData = sortedData.map((s: any, index: number) => {
+          const rating = parseFloat(s.average_rating) || 0;
+          const fundUsage = parseFloat(s.fund_usage_percentage) || 0;
+          const allocation = parseFloat(s.fund_allocation) || 0;
+          
+          const calculatedSatisfaction = rating * 20;
+
+          let calculatedTransparency = 0;
+          
+          if (s.npsn) calculatedTransparency += 10;
+          if (parseInt(s.total_students) > 0) calculatedTransparency += 10;
+          if (s.accreditation && s.accreditation !== 'null') calculatedTransparency += 10;
+
+          if (allocation > 0) calculatedTransparency += 20; 
+          if (fundUsage > 0) calculatedTransparency += 20; 
+
+          if (fundUsage > 0 && fundUsage <= 100) {
+            calculatedTransparency += 30;
+          } else if (fundUsage > 100 && fundUsage <= 150) {
+            calculatedTransparency += 15;
+          } else if (fundUsage > 150) {
+            calculatedTransparency += 0; 
+          } else if (allocation > 0 && fundUsage === 0) {
+            calculatedTransparency += 5; 
+          }
+          
+          return {
+            id: s.id.toString(),
+            name: s.name,
+            level: s.education_level || 'Unknown',
+            location: s.region || 'Unknown',
+            rating: rating,
+            transparencyScore: s.transparency_score ? parseFloat(s.transparency_score) : calculatedTransparency,
+            fundEfficiency: fundUsage, 
+            parentSatisfaction: s.parent_satisfaction ? parseFloat(s.parent_satisfaction) : calculatedSatisfaction,
+            previousRank: s.previous_rank ? parseInt(s.previous_rank) : 0,
+            image: s.image_url || [
+              'https://images.pexels.com/photos/256395/pexels-photo-256395.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+              'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+              'https://images.pexels.com/photos/2982449/pexels-photo-2982449.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+            ][index % 3],
+          };
+        });
         setSchools(mappedData);
       } catch (err) {
         console.error(err);
