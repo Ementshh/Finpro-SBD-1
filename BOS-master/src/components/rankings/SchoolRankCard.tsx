@@ -26,7 +26,7 @@ const SchoolRankCard: React.FC<SchoolRankCardProps> = ({
   image,
 }) => {
 
-  const rankChange = previousRank - rank;
+  const rankChange = (!previousRank || previousRank === 0) ? 0 : previousRank - rank;
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:transform hover:scale-[1.02]">
@@ -64,24 +64,21 @@ const SchoolRankCard: React.FC<SchoolRankCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-1 px-2 py-1 bg-white bg-opacity-20 backdrop-blur-sm rounded-md">
-            {rankChange > 0 ? (
-              <>
-                <TrendingUp className="h-4 w-4 text-green-400" />
-                <span className="text-sm text-white">+{rankChange}</span>
-              </>
-            ) : rankChange < 0 ? (
-              <>
-                <TrendingDown className="h-4 w-4 text-red-400" />
-                <span className="text-sm text-white">{rankChange}</span>
-              </>
-            ) : (
-              <>
-                <Minus className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-white">0</span>
-              </>
-            )}
-          </div>
+          {rankChange !== 0 && (
+            <div className="flex items-center space-x-1 px-2 py-1 bg-white bg-opacity-20 backdrop-blur-sm rounded-md">
+              {rankChange > 0 ? (
+                <>
+                  <TrendingUp className="h-4 w-4 text-green-400" />
+                  <span className="text-sm text-white">+{rankChange}</span>
+                </>
+              ) : (
+                <>
+                  <TrendingDown className="h-4 w-4 text-red-400" />
+                  <span className="text-sm text-white">{rankChange}</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
       
@@ -92,11 +89,11 @@ const SchoolRankCard: React.FC<SchoolRankCardProps> = ({
             <div className="mt-1 relative pt-1">
               <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
                 <div
-                  style={{ width: `${transparencyScore}%` }}
+                  style={{ width: `${Math.min(transparencyScore, 100)}%` }}
                   className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
                 ></div>
               </div>
-              <p className="text-sm font-medium">{transparencyScore}%</p>
+              <p className="text-sm font-medium">{Number(transparencyScore).toFixed(2)}%</p>
             </div>
           </div>
           <div className="text-center">
@@ -104,11 +101,11 @@ const SchoolRankCard: React.FC<SchoolRankCardProps> = ({
             <div className="mt-1 relative pt-1">
               <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
                 <div
-                  style={{ width: `${fundEfficiency}%` }}
+                  style={{ width: `${Math.min(fundEfficiency, 100)}%` }}
                   className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-500"
                 ></div>
               </div>
-              <p className="text-sm font-medium">{fundEfficiency}%</p>
+              <p className="text-sm font-medium">{Number(fundEfficiency).toFixed(2)}%</p>
             </div>
           </div>
           <div className="text-center">
@@ -116,11 +113,11 @@ const SchoolRankCard: React.FC<SchoolRankCardProps> = ({
             <div className="mt-1 relative pt-1">
               <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
                 <div
-                  style={{ width: `${parentSatisfaction}%` }}
+                  style={{ width: `${Math.min(parentSatisfaction, 100)}%` }}
                   className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500"
                 ></div>
               </div>
-              <p className="text-sm font-medium">{parentSatisfaction}%</p>
+              <p className="text-sm font-medium">{Number(parentSatisfaction).toFixed(2)}%</p>
             </div>
           </div>
         </div>
