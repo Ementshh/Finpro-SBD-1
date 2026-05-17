@@ -20,21 +20,17 @@ const Rankings: React.FC = () => {
         const res = await fetch(`${API_URL}/schools`);
         const data = await res.json();
         
-        const mappedData = data.map((s: any, index: number) => ({
+        const mappedData = data.map((s: any) => ({
           id: s.id.toString(),
           name: s.name,
           level: s.education_level || 'Unknown',
           location: s.region || 'Unknown',
           rating: parseFloat(s.average_rating) || 0,
-          transparencyScore: 90 - (index * 2),
+          transparencyScore: parseFloat(s.transparency_score) || 0,
           fundEfficiency: parseFloat(s.fund_usage_percentage) || 0, 
-          parentSatisfaction: 88 - (index * 2),
-          previousRank: index + 2,
-          image: [
-            'https://images.pexels.com/photos/256395/pexels-photo-256395.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-            'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-            'https://images.pexels.com/photos/2982449/pexels-photo-2982449.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
-          ][index % 3],
+          parentSatisfaction: parseFloat(s.parent_satisfaction) || 0,
+          previousRank: parseInt(s.previous_rank) || 0,
+          image: s.image_url || '',
         }));
         setSchools(mappedData);
       } catch (err) {
