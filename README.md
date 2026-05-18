@@ -1,11 +1,11 @@
-# Finpro — BOS Transparency Platform (BOS Monitor)
+# Finpro - BOS Transparency Platform (BOS Monitor)
 
-Platform web untuk memantau transparansi penggunaan Dana BOS, melihat ringkasan alokasi/penggunaan dana per sekolah, serta membuat review/umpan balik.
+Proyek ini adalah website untuk memantau penggunaan Dana BOS. Pengguna bisa melihat ringkasan alokasi dana masing-masing sekolah, penggunaannya, dan memberikan ulasan atau umpan balik.
 
 ## Struktur Proyek
 
-- `BOS-master/` — Frontend (React + Vite + Tailwind)
-- `backend/` — Backend API (Express + PostgreSQL/Vercel Postgres)
+- `BOS-master/` : Frontend (React + Vite + Tailwind)
+- `backend/` : Backend API (Express + PostgreSQL)
 
 ## Tech Stack
 
@@ -13,30 +13,30 @@ Platform web untuk memantau transparansi penggunaan Dana BOS, melihat ringkasan 
 - React 18 + TypeScript
 - Vite
 - Tailwind CSS
-- React Router (BrowserRouter)
+- React Router
 - Recharts
 
 **Backend**
 - Node.js + Express
 - PostgreSQL (`pg`)
-- Auth: bcryptjs (hash password) + JWT
+- Auth: bcryptjs + JWT
 
-## Menjalankan Secara Lokal
+## Cara Menjalankan di Lokal
 
-### 1) Backend
+### 1. Setup Backend
 
-Masuk ke folder backend dan install dependency:
+Masuk ke folder backend lalu install dependency:
 
 ```bash
 cd backend
 npm install
 ```
 
-Buat file `.env` di folder `backend/`:
+Buat file `.env` di dalam folder `backend/`:
 
 ```env
 DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DBNAME
-JWT_SECRET=isi_dengan_secret_acak
+JWT_SECRET=rahasia_jwt_kamu
 PORT=5000
 ```
 
@@ -46,13 +46,10 @@ Jalankan server:
 node server.js
 ```
 
-API akan tersedia di:
-- `http://localhost:5000/api`
+API akan berjalan di `http://localhost:5000/api`.
+*Catatan: Skema database ada di file `backend/schema.sql`.*
 
-Catatan:
-- Skema tabel ada di `backend/schema.sql` (atau `backend/dump.sql`).
-
-### 2) Frontend
+### 2. Setup Frontend
 
 Masuk ke folder frontend dan install dependency:
 
@@ -61,61 +58,38 @@ cd BOS-master
 npm install
 ```
 
-Buat file `.env` di folder `BOS-master/`:
+Buat file `.env` di dalam folder `BOS-master/`:
 
 ```env
-# Boleh base URL backend, nanti otomatis dinormalisasi menjadi .../api
 VITE_API_URL=http://localhost:5000
 ```
 
-Jalankan dev server:
+Jalankan frontend:
 
 ```bash
 npm run dev
 ```
 
-Buka di browser:
-- `http://localhost:5173`
+Buka aplikasi melalui browser di `http://localhost:5173`.
 
-## API Ringkas
+## Daftar API
 
-Base: `/api`
+Base URL: `/api`
 
-- `GET /api/schools` — daftar sekolah + ringkasan rating/alokasi/persentase penggunaan
-- `GET /api/schools/:id` — detail sekolah (kategori penggunaan, history, recent reviews)
-- `GET /api/funds/dashboard` — ringkasan total + agregasi kategori
-- `GET /api/reviews/:school_id` — daftar review per sekolah
-- `POST /api/reviews` — buat review
-- `POST /api/auth/register` — registrasi user
-- `POST /api/auth/login` — login user
+- `GET /api/schools` : Menampilkan daftar sekolah beserta info rating dan alokasi dana
+- `GET /api/schools/:id` : Menampilkan detail sekolah
+- `GET /api/funds/dashboard` : Menampilkan ringkasan total dan agregasi kategori dana
+- `GET /api/reviews/:school_id` : Mengambil daftar ulasan untuk sekolah tertentu
+- `POST /api/reviews` : Mengirim ulasan baru
+- `POST /api/auth/register` : Mendaftarkan akun baru
+- `POST /api/auth/login` : Login user
 
-## Routing SPA (Vercel)
+## Routing di Vercel
 
-Frontend menggunakan `BrowserRouter`, jadi refresh pada route seperti:
-- `/review/new`
-- `/school/1`
+Frontend menggunakan `BrowserRouter`. Supaya halaman tidak error 404 ketika di-refresh (misalnya di `/review/new`), sudah disediakan konfigurasi di `BOS-master/vercel.json` dan `vercel.json` di root folder.
 
-memerlukan rewrite ke `index.html`.
+## Catatan Fitur Review
 
-Konfigurasi sudah disiapkan di `BOS-master/vercel.json`.
-
-Jika project di Vercel masih di-deploy dari **root repo** (bukan Root Directory `BOS-master/`), gunakan konfigurasi root: `vercel.json` (di folder paling atas repo ini). Ini akan mencegah 404 ketika refresh route seperti `/review/new`.
-
-## Deploy ke Vercel (Saran)
-
-### Backend
-- Set **Root Directory** ke `backend/`
-- Pastikan env var di Vercel:
-  - `DATABASE_URL`
-  - `JWT_SECRET`
-
-### Frontend
-- Set **Root Directory** ke `BOS-master/`
-- Set env var:
-  - `VITE_API_URL` ke base URL backend (contoh: `https://your-backend.vercel.app`)
-
-## Catatan Perilaku Review
-
-- Halaman review: `/review/new` (pilih sekolah lalu isi rating & komentar)
-- Skor yang dikirim ke backend adalah rata-rata dari 5 rating (dibulatkan).
-- Jika memilih “anonymous”, `user_id` dikirim sebagai `null`.
+- Untuk memberikan ulasan, buka halaman `/review/new` (pilih sekolah, lalu isi rating dan komentar).
+- Skor rating akhir yang tersimpan di database adalah nilai rata-rata dari 5 aspek penilaian.
+- Kalau pengguna memilih opsi "anonymous", data `user_id` yang dikirim ke sistem menjadi `null`.
