@@ -1,5 +1,10 @@
 # Finpro — BOS Transparency Platform (BOS Monitor)
 
+[![Live Deployment](https://img.shields.io/badge/Live%20Deployment-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://finpro-sbd-1-frontend.vercel.app/)
+
+> [!IMPORTANT]
+> **Live Web Deployment:** **[https://finpro-sbd-1-frontend.vercel.app/](https://finpro-sbd-1-frontend.vercel.app/)**
+
 Platform web untuk memantau transparansi penggunaan Dana BOS, melihat ringkasan alokasi/penggunaan dana per sekolah, serta membuat review/umpan balik.
 
 ## Struktur Proyek
